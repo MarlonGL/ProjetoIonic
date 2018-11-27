@@ -1,0 +1,7 @@
+{
+  "name": "ProjetoIonic",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "ionic-angular"
+}
