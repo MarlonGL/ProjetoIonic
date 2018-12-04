@@ -1,9 +1,13 @@
 import { Component } from '@angular/core';
-import { NavController, Platform } from 'ionic-angular';
+import { NavController, Platform, AlertController } from 'ionic-angular';
 import { DeviceMotion, DeviceMotionAccelerationData } from '@ionic-native/device-motion';
 import "pixi";
 import "p2";
 import * as Phaser from "phaser-ce";
+import { DatabaseProvider } from '../../providers/database/database';
+import { Observable } from 'rxjs';
+import { ScreenOrientation } from '@ionic-native/screen-orientation'
+
 //import { Game } from '../../game/game';
 
 
@@ -23,11 +27,16 @@ export class HomePage {
 
   score: number;
   scoreText;
+
+  listaText;
+  listaRe: string;
+
+  estilo;
   pVez;
   largura = 0;
   altura = 0;
   sprite;
-  vivo:boolean;
+  vivo: boolean;
   cursors;
   //tiros
   bullet;
@@ -42,10 +51,16 @@ export class HomePage {
   botaoStart;
   start = false;
 
+  //scoreArray = [];
+  arrayM = [];
+
   monitorMotion;
-  constructor(public navCtrl: NavController, public plat: Platform, public motion:DeviceMotion) {
+
+  constructor(public navCtrl: NavController, public plat: Platform, public motion: DeviceMotion, public database: DatabaseProvider, public alert: AlertController,
+    public screen: ScreenOrientation) {
+
   }
-  
+
   ionViewDidLoad = () => {
     // Put here the code you want to execute
     this.state = {
@@ -56,10 +71,17 @@ export class HomePage {
       render: this.render,
       resize: this.resize
     };
-   
-    this.game = new Phaser.Game(this.plat.width(), this.plat.height(), Phaser.CANVAS, "game", this.state);
 
-    
+    this.largura = this.plat.width();
+    this.altura = this.plat.height();
+    if (this.largura < this.altura) {
+      this.largura = this.plat.height();
+      this.altura = this.plat.width();
+    }
+    this.game = new Phaser.Game(this.largura, this.altura, Phaser.CANVAS, "game", this.state);
+
+
+
     //console.log(this.game);
   }
 
@@ -73,7 +95,7 @@ export class HomePage {
     this.game.load.image('inimigo', 'assets/jogo/inimigo.png');
 
   }
-  
+
   create = () => {
     this.game.renderer.clearBeforeRender = true;
     //this.game.renderer.roundPixels = true;
@@ -93,6 +115,10 @@ export class HomePage {
     this.setupPlayer();
     this.pVez = 0;
 
+    this.estilo = { font: "bold 15px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+    this.scoreText = this.game.add.text(this.plat.width() / 2, 20, this.score.toString(), this.estilo);
+    this.listaText = this.game.add.text(this.plat.width() / 3, 40, '', this.estilo);
+
     this.inimigos = this.game.add.group();
     this.inimigos.enableBody = true;
     this.inimigos.physicsBodyType = Phaser.Physics.ARCADE;
@@ -100,23 +126,22 @@ export class HomePage {
     this.inimigos.setAll('outOfBoundsKill', true);
 
     this.cursors = this.game.input.keyboard.createCursorKeys();
-    this.game.input.onDown.add(this.comecar,this);
+    this.game.input.onDown.add(this.comecar, this);
   }
   update = () => {
-    if(this.start && this.inimigos.countLiving() === 0)
-    {
+
+    if (this.start && this.inimigos.countLiving() === 0) {
       this.criarInimigos();
       this.pVez = 2;
     }
 
-    if(this.vivo && this.start)
-    {
+    if (this.vivo && this.start) {
       this.monitorMotion = this.motion.watchAcceleration().subscribe((acceleration: DeviceMotionAccelerationData) => {
         this.sprite.angle = (-acceleration.y - 9.81) * 10;
         //console.log('x :' + acceleration.x, ' y: '+ acceleration.y + ' z: ' + acceleration.z + ' time: ' + acceleration.timestamp);
       });
-      
-  
+
+
       this.game.physics.arcade.overlap(this.bullets, this.inimigos, this.colisoes, null, this);
       this.game.physics.arcade.overlap(this.inimigos, this.sprite, this.colisaoCplayer, null, this);
       /*if (this.cursors.left.isDown) {
@@ -138,7 +163,7 @@ export class HomePage {
         this.fireBullet();
       }*/
     }
-    
+
   }
   render = () => {
 
@@ -146,26 +171,31 @@ export class HomePage {
   resize = () => {
 
   }
-  setupPlayer(){
+  setupPlayer() {
     this.sprite = this.game.add.sprite(this.plat.width() / 2, this.plat.height() - 32, 'player');
     this.game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
     this.sprite.anchor.set(0.5);
     this.sprite.body.drag.set(100);
     this.sprite.body.maxVelocity.set(200);
     this.sprite.rotation = -1.5;
-    
+    this.score = 0;
     /*this.inimigos.array.forEach(inimigo => {
       inimigo.kill();
       
     });*/
   }
-  restart(){
+  restart() {
     this.numInimigos = 2;
     this.veloInimigos = 40;
     this.dificuldade = 0;
+    this.score = 0;
+    this.scoreText.text = this.score.toString();
     this.inimigos.forEach(function (c) { c.kill(); });
+    //this.scoreArray = [];
+    this.listaRe = '';
+    this.listaText.text = '';
   }
-  
+
   fireBullet() {
     //console.log('apertei espaco');
     if (this.bullets.countLiving() < 2) {
@@ -214,7 +244,8 @@ export class HomePage {
     //  When a bullet hits an alien we kill them both
     bullet.kill();
     inimigo.kill();
-
+    this.score += 10;
+    this.scoreText.text = this.score.toString();
     if (this.inimigos.countLiving() == 0) {
 
 
@@ -234,143 +265,106 @@ export class HomePage {
     console.log('vc morreu');
     inimigo.kill();
     player.kill();
-    console.log(this.inimigos.countLiving());
-   // this.game.world.removeAll();
+    // this.game.world.removeAll();
     this.vivo = false;
     this.start = false;
     this.monitorMotion.unsubscribe();
     this.game.input.onDown.removeAll();
-    this.game.input.onDown.add(this.comecar,this);
+
+    this.alertFimJogo();
+
+
+
+    this.game.input.onDown.add(this.comecar, this);
   }
-  comecar(){
-      console.log('comecei');
-      this.start = true;
-      this.vivo = true;
-      console.log(this.inimigos.countLiving());
-      if(this.pVez > 0)
-      {
-        this.setupPlayer();
-        this.restart();
+  comecar() {
+    console.log('comecei');
+    this.score = 0;
+    this.start = true;
+    this.vivo = true;
+    // console.log(this.inimigos.countLiving());
+    if (this.pVez > 0) {
+      this.setupPlayer();
+      this.restart();
 
-      }else{
-        this.pVez = 1;
+    } else {
+      this.pVez = 1;
+    }
+
+    this.game.input.onDown.removeAll();
+    this.game.input.onDown.add(this.fireBullet, this);
+
+  }
+
+
+  alertFimJogo() {
+    let alerta = this.alert.create({
+      title: 'Nova Pontuação: ' + this.score,
+      message: 'Deseja adicionar sua pontuação aos recordes?',
+      inputs: [
+        {
+          name: 'Nome',
+          placeholder: 'Insira o nome'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          handler: () => {
+            this.getDatabase();
+            this.scoreText.text = '';
+          }
+        },
+        {
+          text: 'Salvar',
+          handler: (data) => {
+            //console.log("Chamando Create");
+            this.database.add(data.Nome, this.score);
+            this.getDatabase();
+            this.scoreText.text = '';
+          }
+
+        }
+      ]
+    });
+    alerta.present();
+  }
+
+  getDatabase() {
+    let teste2: Observable<any>;
+    let scoreArray: any[] = [];
+    console.log(scoreArray.length + ' depois')
+    teste2 = this.database.getAll();
+    teste2.subscribe(d => {
+      d.forEach(d1 => {
+        //let n = d1.name;
+        //let p = d1.score;
+        //console.log(d1);
+        scoreArray.push({ nome: d1.name, pontos: d1.score });
+      })
+      this.ordenarScore(scoreArray);
+    });
+  }
+  ordenarScore(arrayzin: any[]) {
+    this.arrayM = [];
+    console.log(arrayzin.length);
+    for (let i = 0; i < arrayzin.length; i++) {
+      this.arrayM.push({ nome: arrayzin[i].nome, pontos: arrayzin[i].pontos });
+    }
+    this.arrayM.sort(function (a, b) { return b.pontos - a.pontos; });
+    console.log(this.arrayM);
+    this.listaRecords();
+  }
+
+  listaRecords() {
+    console.log('lista' + this.arrayM.length);
+    this.listaRe = ' ';
+    for (let m = 0; m < this.arrayM.length; m++) {
+      if (m < 10) {
+        this.listaRe += m + 1 + ' => Nome: ' + this.arrayM[m].nome + ' | Pontos: ' + this.arrayM[m].pontos + '\n ';
       }
-
-      this.game.input.onDown.removeAll();
-      this.game.input.onDown.add(this.fireBullet,this);
-
+    }
+    this.listaText.text = this.listaRe;
+    console.log(this.listaRe);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*constructor(public navCtrl: NavController, public plat: Platform) {
-    //this.gameInstance = new Game(plat.width(), plat.height());
-    this.game = new Phaser.Game(plat.width(), plat.height(), Phaser.CANVAS, "game", { preload: preload, create: create, update: update, render: render });
-
-    this.largura = plat.width();
-    this.altura = plat.height();
-
-    function preload() {
-      this.game.load.image('player', 'assets/jogo/player2.png');
-      this.game.load.image('bullet', 'assets/jogo/bullets.png');
-    }
-    function create() {
-      console.log('largura: ' + plat.width());
-      console.log('altura: ' + plat.height());
-      //this.floor = new Phaser.Rectangle(0, 50, 800, 50);
-
-      this.game.renderer.clearBeforeRender = true;
-      this.game.renderer.roundPixels = true;
-      this.game.physics.startSystem(Phaser.Physics.ARCADE);
-
-      this.bullets = this.game.add.group();
-      this.bullets.enableBody = true;
-      this.bullets.physicsBodyType = Phaser.Physics.ARCADE;
-
-      this.bullets.createMultiple(40, 'bullet');
-      this.bullets.setAll('anchor.x', 0.5);
-      this.bullets.setAll('anchor.y', 0.5);
-
-      this.sprite = this.game.add.sprite(plat.width()/2, plat.height() - 32, 'player');
-      this.sprite.anchor.set(0.5);
-
-      this.game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
-
-      this.sprite.body.drag.set(100);
-      this.sprite.body.maxVelocity.set(200);
-
-      this.cursors = this.game.input.keyboard.createCursorKeys();
-
-      var style = { font: "bold 12px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
-      this.scoreText = this.game.add.text(5, 360 / 3, 'Score: 0', style);
-      this.score = 0;
-    }
-    function update() {
-      //this.score += 10;
-      this.scoreText.text = 'Score: ' + this.score;
-
-      /*if (this.cursors.up.isDown) {
-        this.game.physics.arcade.accelerationFromRotation(this.sprite.rotation, 200, this.sprite.body.acceleration);
-      }
-      else {
-        this.sprite.body.acceleration.set(0);
-      }*/
-/*
-      if (this.cursors.left.isDown) {
-        this.sprite.body.angularVelocity = -300;
-      }
-      else if (this.cursors.right.isDown) {
-        this.sprite.body.angularVelocity = 300;
-      }
-      else {
-        this.sprite.body.angularVelocity = 0;
-      }
-
-      if (this.game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
-        fireBullet();
-      }
-
-      
-    }
-    function render() {
-      //this.game.debug.geom(this.floor,'#0fffff');
-    }
-    
-    function fireBullet() {
-      //if (this.game.time.now > this.bulletTime) {
-       // this.bullet = this.bullets.getFirstExists(false);
-  
-        //if (this.bullet) {
-          this.bullet.reset(this.sprite.body.x + 16, this.sprite.body.y + 16);
-          this.bullet.lifespan = 2000;
-          this.bullet.rotation = this.sprite.rotation;
-          this.game.physics.arcade.velocityFromRotation(this.sprite.rotation, 400, this.bullet.body.velocity);
-          this.bulletTime = this.game.time.now + 50;
-        //}
-      //}
-  
-    }
-
-  }*/
-
-
