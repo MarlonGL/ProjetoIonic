@@ -1,19 +1,23 @@
-import "pixi";
-import "p2";
-import * as Phaser from "phaser-ce";
+//import "pixi";
+//import "p2";
+//mport * as Phaser from "phaser-ce";
 
-/**
+/*/**
  * Main entry game class
  * @export
  * @class Game
  * @extends {Phaser.Game}
  */
-export class Game extends Phaser.Game {
+ 
+
+
+//export class Game extends Phaser.Game {
     /**
      * Creates an instance of Game.
-     * @memberof Game
+     * aqui
      */
-    jogo;
+    //@memberof Game aqui
+    /*jogo;
     constructor(width:number, height:number) {
         // call parent constructor
         super( width, height, Phaser.CANVAS, "game", { preload: preload, create: create, update: update } );
@@ -28,6 +32,5 @@ export class Game extends Phaser.Game {
         function update(){
 
         }
-        // start with boot state
-    }
-}
+    }*/
+//}
