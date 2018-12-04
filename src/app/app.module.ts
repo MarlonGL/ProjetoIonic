@@ -5,10 +5,21 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
 import { DeviceMotion, DeviceMotionAccelerationData } from '@ionic-native/device-motion';
+import { AngularFireModule } from '@angular/fire';
+import { AngularFirestoreModule } from '@angular/fire/firestore';
 
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
+
+var firebaseConfig = {
+  apiKey: "AIzaSyDR0yqtVEe3mVl23jeSicAQl3uhBvaXE_U",
+  authDomain: "projetoionicbm.firebaseapp.com",
+  databaseURL: "https://projetoionicbm.firebaseio.com",
+  projectId: "projetoionicbm",
+  storageBucket: "projetoionicbm.appspot.com",
+  messagingSenderId: "135788112289"
+};
 
 @NgModule({
   declarations: [
@@ -17,7 +28,9 @@ import { HomePage } from '../pages/home/home';
   ],
   imports: [
     BrowserModule,
-    IonicModule.forRoot(MyApp)
+    IonicModule.forRoot(MyApp),
+    AngularFireModule.initializeApp(firebaseConfig),
+    AngularFirestoreModule
   ],
   bootstrap: [IonicApp],
   entryComponents: [
