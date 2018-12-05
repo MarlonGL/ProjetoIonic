@@ -7,6 +7,8 @@ import * as Phaser from "phaser-ce";
 import { DatabaseProvider } from '../../providers/database/database';
 import { Observable } from 'rxjs';
 import { ScreenOrientation } from '@ionic-native/screen-orientation'
+import { StatusBar } from '@ionic-native/status-bar';
+
 
 //import { Game } from '../../game/game';
 
@@ -57,11 +59,12 @@ export class HomePage {
   monitorMotion;
 
   constructor(public navCtrl: NavController, public plat: Platform, public motion: DeviceMotion, public database: DatabaseProvider, public alert: AlertController,
-    public screen: ScreenOrientation) {
+    public screen: ScreenOrientation, public status:StatusBar) {
+      
 
   }
 
-  ionViewDidLoad = () => {
+  ionViewDidEnter = () => {
     // Put here the code you want to execute
     this.state = {
       init: this.init,
@@ -78,7 +81,12 @@ export class HomePage {
       this.largura = this.plat.height();
       this.altura = this.plat.width();
     }
-    this.game = new Phaser.Game(this.largura, this.altura, Phaser.CANVAS, "game", this.state);
+
+    if(this.plat.isLandscape())
+    {
+      console.log('largura: '+this.plat.width() + ' altura: ' + this.plat.height())
+      this.game = new Phaser.Game(this.plat.width(),this.plat.height(), Phaser.CANVAS, "game", this.state);
+    }
 
 
 
@@ -137,7 +145,7 @@ export class HomePage {
 
     if (this.vivo && this.start) {
       this.monitorMotion = this.motion.watchAcceleration().subscribe((acceleration: DeviceMotionAccelerationData) => {
-        this.sprite.angle = (-acceleration.y - 9.81) * 10;
+        this.sprite.angle = (acceleration.y - 9.81) * 10;
         //console.log('x :' + acceleration.x, ' y: '+ acceleration.y + ' z: ' + acceleration.z + ' time: ' + acceleration.timestamp);
       });
 

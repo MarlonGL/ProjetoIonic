@@ -14,11 +14,14 @@ import { HomePage } from '../pages/home/home';
 export class MyApp {
   rootPage:any = HomePage;
   constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, screen:ScreenOrientation) {
+    //statusBar.hide();
+    statusBar.overlaysWebView(true);
+
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
       // Here you can do any higher level native things you might need.
-      screen.lock(screen.ORIENTATIONS.LANDSCAPE_SECONDARY);
-      statusBar.hide();
+      screen.lock(screen.ORIENTATIONS.LANDSCAPE_PRIMARY);
+
 
       statusBar.styleDefault();
       splashScreen.hide();
