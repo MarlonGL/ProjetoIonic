@@ -5,6 +5,9 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
 import { DeviceMotion, DeviceMotionAccelerationData } from '@ionic-native/device-motion';
+import { AndroidFullScreen } from '@ionic-native/android-full-screen';
+
+
 import { AngularFireModule } from '@angular/fire';
 import { AngularFirestoreModule } from '@angular/fire/firestore';
 import { Firebase } from '@ionic-native/firebase';
@@ -47,7 +50,8 @@ let firebaseConfig = {
     ScreenOrientation,
     DeviceMotion,
     DatabaseProvider,
-    AngularFireDatabase
+    AngularFireDatabase,
+    AndroidFullScreen
   ]
 })
 export class AppModule {}

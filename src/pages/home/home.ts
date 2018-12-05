@@ -6,8 +6,8 @@ import "p2";
 import * as Phaser from "phaser-ce";
 import { DatabaseProvider } from '../../providers/database/database';
 import { Observable } from 'rxjs';
-import { ScreenOrientation } from '@ionic-native/screen-orientation'
 import { StatusBar } from '@ionic-native/status-bar';
+import { AndroidFullScreen } from '@ionic-native/android-full-screen';
 
 
 //import { Game } from '../../game/game';
@@ -59,13 +59,18 @@ export class HomePage {
   monitorMotion;
 
   constructor(public navCtrl: NavController, public plat: Platform, public motion: DeviceMotion, public database: DatabaseProvider, public alert: AlertController,
-    public screen: ScreenOrientation, public status:StatusBar) {
-      
+    public status:StatusBar, public full:AndroidFullScreen) {
+      full.immersiveMode();
+
 
   }
-
+  ionViewDidLoad = () => {
+    //this.status.hide();
+  }
   ionViewDidEnter = () => {
     // Put here the code you want to execute
+    //this.status.hide();
+    
     this.state = {
       init: this.init,
       preload: this.preload,
@@ -75,22 +80,49 @@ export class HomePage {
       resize: this.resize
     };
 
-    this.largura = this.plat.width();
+    /*this.largura = this.plat.width();
     this.altura = this.plat.height();
     if (this.largura < this.altura) {
       this.largura = this.plat.height();
       this.altura = this.plat.width();
-    }
+    }*/
+
+    let l, a;
+    this.retornaLar().then((res:number)=>{
+      this.largura = res;
+      l = res;
+      console.log('largura: '+l);
+
+    });
+    this.retornaAlt().then((res2:number)=>{
+      this.altura = res2;
+      a = res2;
+      console.log('altura: '+a);
+    }).then(()=>{
+      this.game = new Phaser.Game(l,a, Phaser.CANVAS, "game", this.state);
+    });
+
 
     if(this.plat.isLandscape())
     {
-      console.log('largura: '+this.plat.width() + ' altura: ' + this.plat.height())
-      this.game = new Phaser.Game(this.plat.width(),this.plat.height(), Phaser.CANVAS, "game", this.state);
+      //console.log('largura: '+this.plat.width() + ' altura: ' + this.plat.height());
+      //console.log('largura: '+this.largura + ' altura: ' + this.altura);
+      //this.game = new Phaser.Game(this.plat.width(),this.plat.height(), Phaser.CANVAS, "game", this.state);
+      //this.game = new Phaser.Game(this.full.,this.plat.height(), Phaser.CANVAS, "game", this.state);
+
     }
 
 
 
     //console.log(this.game);
+  }
+
+  retornaLar(): Promise<number>{
+    return this.full.immersiveWidth();
+  }
+
+  retornaAlt(): Promise<number> {
+    return this.full.immersiveHeight();
   }
 
   init = () => {
